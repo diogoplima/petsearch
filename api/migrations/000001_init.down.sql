@@ -1,0 +1,14 @@
+drop function if exists find_candidates(uuid, double precision, int);
+drop table if exists push_subscriptions;
+drop table if exists matches;
+drop trigger if exists on_report_private_written on report_private;
+drop function if exists fuzz_location();
+drop table if exists report_private;
+drop table if exists reports;
+drop table if exists sessions;
+drop table if exists login_tokens;
+drop table if exists users;
+drop type if exists dog_size;
+drop type if exists match_state;
+drop type if exists report_state;
+drop type if exists report_status;

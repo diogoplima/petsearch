@@ -1,0 +1,20 @@
+{
+  "recommendations": [
+    "golang.go",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig",
+    "ms-azuretools.vscode-docker",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "redhat.vscode-yaml",
+    "github.vscode-github-actions",
+    "eamodio.gitlens",
+    "usernamehw.errorlens",
+    "ms-playwright.playwright",
+    "lokalise.i18n-ally",
+    "humao.rest-client",
+    "vitest.explorer",
+    "anthropic.claude-code"
+  ]
+}
