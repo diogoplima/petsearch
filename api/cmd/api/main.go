@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -9,9 +12,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	migratepgx "github.com/golang-migrate/migrate/v4/database/pgx/v5"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/diogoplima/petsearch/internal/config"
+	"github.com/diogoplima/petsearch/migrations"
 )
 
 func main() {
@@ -26,6 +33,12 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	if err := runMigrations(cfg.DatabaseURL); err != nil {
+		slog.Error("migrations failed", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("migrations applied")
 
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -74,4 +87,33 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Error("graceful shutdown failed", "error", err)
 	}
+}
+
+func runMigrations(databaseURL string) error {
+	source, err := iofs.New(migrations.FS, ".")
+	if err != nil {
+		return fmt.Errorf("migrations source: %w", err)
+	}
+
+	db, err := sql.Open("pgx", databaseURL)
+	if err != nil {
+		return fmt.Errorf("migrations db open: %w", err)
+	}
+	defer db.Close()
+
+	driver, err := migratepgx.WithInstance(db, &migratepgx.Config{})
+	if err != nil {
+		return fmt.Errorf("migrations driver: %w", err)
+	}
+
+	m, err := migrate.NewWithInstance("iofs", source, "pgx5", driver)
+	if err != nil {
+		return fmt.Errorf("migrations init: %w", err)
+	}
+
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("migrations up: %w", err)
+	}
+
+	return nil
 }
