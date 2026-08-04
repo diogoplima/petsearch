@@ -47,11 +47,19 @@ README with screenshots + live URL, CONTRIBUTING, ADRs published, demo video.
 Seed the launch: local Facebook groups, vets, shelters, câmara municipal.
 **DoD:** 10 real reports from people who aren't you.
 
-## v2 — Embedding worker (post-launch)
-Python CLIP worker on Oracle free ARM; backfill embeddings; add cosine term
-to scoring; measure whether ranking actually improves (keep a simple
-eval set of known matched pairs). This milestone is the devops + ML-ops
-playground — take detours here, not in the core.
+## v2 — Embedding worker & two-tier matching (post-launch)
+Python CLIP worker on Oracle free ARM, running dark from launch day,
+embedding every report on arrival. Per ADR-0017, v2 is **two-tier** rather
+than a single scoring tweak: tier 1 keeps v1's radius-bounded matching
+unchanged; tier 2 adds a global, distance-unfiltered embedding KNN (HNSW)
+over all open counterpart reports, so stolen/transported dogs outside any
+local radius become matchable, geography becoming a scoring feature instead
+of a hard gate. Tier 2 ships only after an offline eval on public pet re-ID
+data (pre-launch beta justification) and then a confirmed-match-pairs eval
+(the eval that earns full confidence) both show it measurably improves mean
+rank of true matches — precision is the launch gate, not throughput. This
+milestone is the devops + ML-ops playground — take detours here, not in the
+core.
 
 ## Post-launch portfolio track — AWS deployment showcase
 Terraform that deploys the app to AWS properly (VPC, ECS or EC2, S3 +

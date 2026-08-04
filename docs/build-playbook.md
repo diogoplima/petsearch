@@ -28,14 +28,16 @@ this file is the HOW-TO-DRIVE.
 
 ## Kickoff prompt template
 
-> Read CLAUDE.md and docs/milestones/<FILE>. We're implementing this
-> milestone step by step, following the recommended path (alternatives are
-> reading material, not build orders). For business-logic steps, follow
-> ADR-0011: write the tests first from the docs, run them, show me the
-> failures, then STOP for my review before implementing. Explain Go idioms
-> and infra concepts as you go — I'm learning. If anything is ambiguous or
-> contradicts the docs, stop and ask instead of choosing silently. Start
-> with step 1.
+> Read CLAUDE.md and docs/milestones/<FILE>. Before starting, inspect the
+> repo's current state and confirm the prior milestones' Definition of Done
+> is actually met — don't assume progress from the docs alone. We're
+> implementing this milestone step by step, following the recommended path
+> (alternatives are reading material, not build orders). For business-logic
+> steps, follow ADR-0011: write the tests first from the docs, run them,
+> show me the failures, then STOP for my review before implementing. Explain
+> Go idioms and infra concepts as you go — I'm learning. If anything is
+> ambiguous or contradicts the docs, stop and ask instead of choosing
+> silently. Start with step 1.
 
 Swap <FILE> per milestone. After trust is established (~M2), you may drop
 the hard STOP and review tests in the diff instead.
@@ -44,6 +46,9 @@ the hard STOP and review tests in the diff instead.
 
 ### M0 — walking skeleton (docs/milestones/M0-walking-skeleton.md)
 
+- Machine setup and repo hygiene (git init, LICENSE, .gitignore, README
+  stub, `gh repo create`) are already done for this repo — M0 starts at the
+  DB image step.
 - Pre-work (you, not the agent): DuckDNS account + subdomain chosen (no
   server yet). VPS creation, hardening, DuckDNS IP update, and Actions
   secrets happen at step 10 — after CI is green.

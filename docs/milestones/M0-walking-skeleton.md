@@ -1,30 +1,28 @@
 # M0 — Walking skeleton
 
-**Prerequisite:** a set-up machine — see `docs/setup.md` (installs, VS Code
-extensions, accounts checklist). The final sanity check there (Part E) must pass
-before starting.
+**Prerequisite:** a set-up machine (installs, VS Code extensions, accounts
+checklist) and repo hygiene (git init, AGPL LICENSE, .gitignore, README
+stub, published via `gh repo create`, day-one repo settings) — already done
+for this repo.
 
 **Goal:** `git push` to main deploys a live, TLS-served hello-PWA + `/healthz`
 API on the VPS. No features. Everything after this lands on real infra.
 
-> VPS and DuckDNS are deferred to step 9 — start coding immediately,
-> provision the server only after CI is green (step 8).
+> VPS and DuckDNS are deferred to step 8 — start coding immediately,
+> provision the server only after CI is green (step 7).
 
 ## Steps
 
-1. **Repo hygiene**: done via `docs/setup.md` Part B (git init, AGPL
-   LICENSE, .gitignore, README stub, publish via `gh repo create`, day-one
-   repo settings). Verify its end-state checklist before continuing.
-2. **DB image**: `deploy/db/Dockerfile` per docs/services/infra.md
+1. **DB image**: `deploy/db/Dockerfile` per docs/services/infra.md
    (postgis + pgvector). Build locally; verify both extensions:
    `docker run --rm <img> psql -U postgres -c "create extension postgis; create extension vector;"`
    (use a throwaway container with POSTGRES_PASSWORD set).
-3. **Compose layout (ADR-0016)**: `deploy/compose.yml` base (caddy, api, db,
+2. **Compose layout (ADR-0016)**: `deploy/compose.yml` base (caddy, api, db,
    minio, mailpit) + `compose.local.yml` and `compose.prod.yml` overrides.
    Dev brings up db + MinIO + Mailpit; parity mode (`make up`) runs the
    full base with the api built from source and Caddy on `localhost` with
    `tls internal`. Healthchecks on db (`pg_isready`) and minio.
-4. **Go API skeleton**: `cd api && go mod init github.com/<you>/petsearch`.
+3. **Go API skeleton**: `cd api && go mod init github.com/<you>/petsearch`.
    - `internal/config`: read `PORT`, `DATABASE_URL` etc. from env; fail fast
      listing missing vars.
    - `cmd/api/main.go`: slog JSON logger, ServeMux, `GET /healthz` (200) and
@@ -32,23 +30,23 @@ API on the VPS. No features. Everything after this lands on real infra.
      on SIGTERM (`server.Shutdown`) — do graceful shutdown NOW; retrofitting
      it mid-deploy-pipeline is how you learn about dropped requests the bad way.
    - pgx pool created at startup; `/readyz` is its first consumer.
-5. **Migrations wiring**: add golang-migrate as a library, run pending
+4. **Migrations wiring**: add golang-migrate as a library, run pending
    migrations on startup before serving. Apply `000001_init` — expect to fix
    syntax; that's the point of doing it now.
-6. **Web skeleton**: `npm create vite@latest web -- --template react-ts`;
+5. **Web skeleton**: `npm create vite@latest web -- --template react-ts`;
    add `vite-plugin-pwa` with a manifest (name, icons, standalone display);
    a page that fetches `/v1/../healthz` via the dev proxy and shows status.
-7. **Makefile** (root): `dev`, `up` (parity stack), `seed` (sample users +
+6. **Makefile** (root): `dev`, `up` (parity stack), `seed` (sample users +
    reports around a fictional neighborhood — stub now, flesh out in M2),
    `test`, `lint`, `migrate-new`, `migrate-up`, `sqlc` (stub for now).
    `make dev` = compose up db+minio+mailpit + api with live reload +
    `vite dev`.
-8. **API image**: multi-stage Dockerfile — build stage → `gcr.io/distroless/static`
+7. **API image**: multi-stage Dockerfile — build stage → `gcr.io/distroless/static`
    final, `CGO_ENABLED=0`. Confirm image is ~15–25 MB.
-9. **CI** (`.github/workflows/ci.yml`): golangci-lint, `go test ./...`,
+8. **CI** (`.github/workflows/ci.yml`): golangci-lint, `go test ./...`,
    eslint + `tsc --noEmit`, `vite build`. Runs on PRs and main.
    Push a branch, confirm CI goes green before touching any server.
-10. **VPS provision** (do manually once CI is green; document steps in
+9. **VPS provision** (do manually once CI is green; document steps in
     infra.md as you go):
     - Hetzner: create CX22, Ubuntu 24.04, paste your SSH public key
     - Harden: `ufw allow 22,80,443`, unattended-upgrades, fail2ban,
@@ -59,13 +57,13 @@ API on the VPS. No features. Everything after this lands on real infra.
     - GitHub Actions secrets: SSH_HOST (server IP), SSH_USER (`deploy`),
       SSH_KEY (contents of `~/.ssh/id_ed25519` — the private key, into
       the secret only, never a file)
-11. **Prod compose + Caddy**: `compose.prod.yml` adds caddy (Caddyfile from
+10. **Prod compose + Caddy**: `compose.prod.yml` adds caddy (Caddyfile from
     infra.md) + api service from GHCR image; db with a named volume.
-12. **CD** (`deploy.yml`, on main after CI): build+push api image to GHCR,
+11. **CD** (`deploy.yml`, on main after CI): build+push api image to GHCR,
     build web bundle, `scp`/rsync bundle to the Caddy-served dir, SSH
     `docker compose pull && up -d`, then curl `/readyz` and fail the job if
     it's not 200.
-13. **Smoke it**: push a trivial change; watch it go live without touching
+12. **Smoke it**: push a trivial change; watch it go live without touching
     the server.
 
 ## Alternatives worth knowing
