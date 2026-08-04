@@ -1,4 +1,4 @@
-# Dog Finder — CLAUDE.md
+# Pet Search — CLAUDE.md
 
 Community app to reunite lost dogs with their owners. Users report a dog as
 **missing** or **sighted** (photo + attributes + location); the system suggests
@@ -57,6 +57,7 @@ cd web && npm run e2e       # Playwright
 - High-level design: `docs/architecture.md`
 - Technology choices + rationale: `docs/tech-stack.md`
 - Build plan / current milestone: `docs/roadmap.md`
+- Build playbook with session rules and per milestone notes: `docs/build-playbook.md`
 - Step-by-step guide per milestone: `docs/milestones/M*.md` — when
   implementing, follow the **recommended path**; "Alternatives worth
   knowing" blocks are teaching material, not an invitation to build all of

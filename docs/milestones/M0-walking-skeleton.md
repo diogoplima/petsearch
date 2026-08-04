@@ -7,6 +7,9 @@ before starting.
 **Goal:** `git push` to main deploys a live, TLS-served hello-PWA + `/healthz`
 API on the VPS. No features. Everything after this lands on real infra.
 
+> VPS and DuckDNS are deferred to step 9 — start coding immediately,
+> provision the server only after CI is green (step 8).
+
 ## Steps
 
 1. **Repo hygiene**: done via `docs/setup.md` Part B (git init, AGPL
@@ -42,13 +45,22 @@ API on the VPS. No features. Everything after this lands on real infra.
    `vite dev`.
 8. **API image**: multi-stage Dockerfile — build stage → `gcr.io/distroless/static`
    final, `CGO_ENABLED=0`. Confirm image is ~15–25 MB.
-9. **VPS provision** (checklist, do manually, document in infra.md as you go):
-   create server → SSH key only, disable password auth → `ufw allow 22,80,443`
-   → unattended-upgrades → install Docker → DNS A record → clone deploy/.
-10. **Prod compose + Caddy**: `compose.prod.yml` adds caddy (Caddyfile from
+9. **CI** (`.github/workflows/ci.yml`): golangci-lint, `go test ./...`,
+   eslint + `tsc --noEmit`, `vite build`. Runs on PRs and main.
+   Push a branch, confirm CI goes green before touching any server.
+10. **VPS provision** (do manually once CI is green; document steps in
+    infra.md as you go):
+    - Hetzner: create CX22, Ubuntu 24.04, paste your SSH public key
+    - Harden: `ufw allow 22,80,443`, unattended-upgrades, fail2ban,
+      install Docker (`curl -fsSL https://get.docker.com | sh`), create
+      `deploy` user in the `docker` group, copy your SSH key to it
+    - DuckDNS: paste the server IPv4, click Update Now, verify with
+      `dig <yoursubdomain>.duckdns.org`
+    - GitHub Actions secrets: SSH_HOST (server IP), SSH_USER (`deploy`),
+      SSH_KEY (contents of `~/.ssh/id_ed25519` — the private key, into
+      the secret only, never a file)
+11. **Prod compose + Caddy**: `compose.prod.yml` adds caddy (Caddyfile from
     infra.md) + api service from GHCR image; db with a named volume.
-11. **CI** (`.github/workflows/ci.yml`): golangci-lint, `go test ./...`,
-    eslint + `tsc --noEmit`, `vite build`. Runs on PRs and main.
 12. **CD** (`deploy.yml`, on main after CI): build+push api image to GHCR,
     build web bundle, `scp`/rsync bundle to the Caddy-served dir, SSH
     `docker compose pull && up -d`, then curl `/readyz` and fail the job if
